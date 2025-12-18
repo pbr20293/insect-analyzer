@@ -5,9 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:server": "nodemon server/index.js",
+    "dev:full": "concurrently \"npm run dev\" \"npm run dev:server\"",
     "build": "tsc -b && vite build",
+    "build:server": "echo 'Server ready for production'",
+    "start": "node server/index.js",
+    "start:production": "NODE_ENV=production node server/index.js",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "npm run build && npm run start:production",
+    "install:deps": "npm install && npm run install:server",
+    "install:server": "cd server && npm init -y && npm install express cors multer minio dotenv express-rate-limit compression helmet @gradio/client nodemon"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.954.0",
@@ -15,7 +22,16 @@
     "@gradio/client": "^2.0.0",
     "@smithy/fetch-http-handler": "^5.3.7",
     "@smithy/protocol-http": "^5.3.6",
+    "compression": "^1.8.1",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.2.1",
+    "helmet": "^8.1.0",
     "lucide-react": "^0.561.0",
+    "minio": "^8.0.6",
+    "multer": "^2.0.2",
+    "nodemon": "^3.1.11",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },
@@ -25,6 +41,7 @@
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
+    "concurrently": "^9.2.1",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",

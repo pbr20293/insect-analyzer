@@ -4,9 +4,10 @@ interface SplitImageViewerProps {
     rawImageUrl: string | null;
     processedImageUrl: string | null;
     isLoading: boolean;
+    aiEnabled: boolean;
 }
 
-export const SplitImageViewer = ({ rawImageUrl, processedImageUrl, isLoading }: SplitImageViewerProps) => {
+export const SplitImageViewer = ({ rawImageUrl, processedImageUrl, isLoading, aiEnabled }: SplitImageViewerProps) => {
 
     // Placeholder skeleton
     if (!rawImageUrl && !processedImageUrl) {
@@ -113,7 +114,7 @@ export const SplitImageViewer = ({ rawImageUrl, processedImageUrl, isLoading }: 
                         />
                     ) : (
                         <div style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '1rem' }}>
-                            {isLoading ? 'Analyzing...' : 'Waiting for analysis...'}
+                            {aiEnabled ? (isLoading ? 'Analyzing...' : 'Waiting for analysis...') : 'AI analysis turned off'}
                         </div>
                     )}
                 </div>

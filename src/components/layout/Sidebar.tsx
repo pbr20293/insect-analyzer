@@ -1,17 +1,20 @@
 import { useState } from 'react';
 import { useSettings } from '../../context/SettingsContext';
-import { Save, AlertTriangle } from 'lucide-react';
+import { apiService } from '../../services/apiService';
+import { Save, AlertTriangle, Settings } from 'lucide-react';
 
 interface SidebarProps {
     isOpen: boolean;
 }
 
 export const Sidebar = ({ isOpen }: SidebarProps) => {
-    const { minioConfig, modelConfig, updateMinIOConfig, updateModelConfig } = useSettings();
+    const { minioConfig, modelConfig, slideshowConfig, pollingConfig, aiAnalysisConfig, updateMinIOConfig, updateModelConfig, updateSlideshowConfig, updatePollingConfig, updateAIAnalysisConfig } = useSettings();
 
     // Local state for form inputs to avoid constant context updates on every keystroke
     const [localMinio, setLocalMinio] = useState(minioConfig);
     const [localModel, setLocalModel] = useState(modelConfig);
+    const [localSlideshow, setLocalSlideshow] = useState(slideshowConfig);
+    const [localPolling, setLocalPolling] = useState(pollingConfig);
 
     const handleMinioSave = () => {
         updateMinIOConfig(localMinio);
@@ -22,26 +25,22 @@ export const Sidebar = ({ isOpen }: SidebarProps) => {
     };
 
     const handleTestConnection = async () => {
-        const proxyUrl = '/s3-proxy/minio/health/live';
-        console.log("Testing connection to:", proxyUrl);
         try {
-            const res = await fetch(proxyUrl);
-            const text = await res.text();
-            console.log("Health Check Status:", res.status);
-            console.log("Health Check Body:", text);
-            alert(`Health Check: ${res.status}\nBody: ${text.substring(0, 100)}`);
-
-            // Test Bucket access
-            if (localMinio.bucket) {
-                const bucketUrl = `/s3-proxy/${localMinio.bucket}/?max-keys=1`;
-                const bucketRes = await fetch(bucketUrl);
-                const bucketText = await bucketRes.text();
-                const isXML = bucketText.includes('<?xml');
-                alert(`Bucket Check: ${bucketRes.status}\nIs XML: ${isXML}\nBody: ${bucketText.substring(0, 100)}`);
+            const result = await apiService.testMinioConnection({
+                accessKey: localMinio.accessKey,
+                secretKey: localMinio.secretKey,
+                bucket: localMinio.bucket
+            });
+            
+            if (result.success) {
+                const bucketStatus = (result as any).bucketExists ? 'exists' : 'not found';
+                alert(`✅ Connection successful!\nBucket "${localMinio.bucket}" ${bucketStatus}`);
+            } else {
+                alert(`❌ Connection failed: ${result.error}`);
             }
-        } catch (e: any) {
-            console.error("Test Failed:", e);
-            alert(`Test Failed: ${e.message}`);
+        } catch (error: any) {
+            console.error("Test connection failed:", error);
+            alert(`❌ Test Failed: ${error.message}`);
         }
     };
 
@@ -72,14 +71,6 @@ export const Sidebar = ({ isOpen }: SidebarProps) => {
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
                     <div>
-                        <label style={{ fontSize: '0.8rem', display: 'block', marginBottom: '4px' }}>Endpoint</label>
-                        <input
-                            className="input-field"
-                            value={localMinio.endPoint}
-                            onChange={(e) => setLocalMinio({ ...localMinio, endPoint: e.target.value })}
-                        />
-                    </div>
-                    <div>
                         <label style={{ fontSize: '0.8rem', display: 'block', marginBottom: '4px' }}>Access Key</label>
                         <input
                             className="input-field"
@@ -103,6 +94,15 @@ export const Sidebar = ({ isOpen }: SidebarProps) => {
                             className="input-field"
                             value={localMinio.bucket}
                             onChange={(e) => setLocalMinio({ ...localMinio, bucket: e.target.value })}
+                        />
+                    </div>
+                    <div>
+                        <label style={{ fontSize: '0.8rem', display: 'block', marginBottom: '4px' }}>Folder Prefix (optional)</label>
+                        <input
+                            className="input-field"
+                            value={localMinio.folder}
+                            onChange={(e) => setLocalMinio({ ...localMinio, folder: e.target.value })}
+                            placeholder="e.g. Fraunhofer-prod/"
                         />
                     </div>
 
@@ -133,6 +133,162 @@ export const Sidebar = ({ isOpen }: SidebarProps) => {
                     <button className="btn-primary" onClick={handleModelSave} style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
                         <Save size={16} /> Save Model Settings
                     </button>
+                </div>
+            </div>
+
+            {/* Slideshow Section */}
+            <div style={{ marginBottom: '2rem' }}>
+                <h4 style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>Slideshow Settings</h4>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                    <div>
+                        <label style={{ fontSize: '0.8rem', display: 'block', marginBottom: '4px' }}>Slide Duration (seconds)</label>
+                        <input
+                            className="input-field"
+                            type="number"
+                            min="1"
+                            max="300"
+                            value={localSlideshow.slideDuration}
+                            onChange={(e) => setLocalSlideshow({ ...localSlideshow, slideDuration: parseInt(e.target.value) || 10 })}
+                        />
+                    </div>
+                    
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <input
+                            type="checkbox"
+                            id="autoAdvance"
+                            checked={localSlideshow.autoAdvance}
+                            onChange={(e) => setLocalSlideshow({ ...localSlideshow, autoAdvance: e.target.checked })}
+                        />
+                        <label htmlFor="autoAdvance" style={{ fontSize: '0.8rem' }}>Auto-advance images</label>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <input
+                            type="checkbox"
+                            id="showManualControls"
+                            checked={localSlideshow.showManualControls}
+                            onChange={(e) => setLocalSlideshow({ ...localSlideshow, showManualControls: e.target.checked })}
+                        />
+                        <label htmlFor="showManualControls" style={{ fontSize: '0.8rem' }}>Show navigation arrows</label>
+                    </div>
+
+                    {localSlideshow.autoAdvance && (
+                        <div>
+                            <label style={{ fontSize: '0.8rem', display: 'block', marginBottom: '8px', color: 'var(--text-secondary)' }}>Slideshow Mode:</label>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                    <input
+                                        type="radio"
+                                        id="continuous"
+                                        name="slideshowMode"
+                                        checked={localSlideshow.mode === 'continuous'}
+                                        onChange={() => setLocalSlideshow({ ...localSlideshow, mode: 'continuous' })}
+                                    />
+                                    <label htmlFor="continuous" style={{ fontSize: '0.8rem' }}>Continuous - Cycle through all images</label>
+                                </div>
+                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                    <input
+                                        type="radio"
+                                        id="latestOnly"
+                                        name="slideshowMode"
+                                        checked={localSlideshow.mode === 'latest-only'}
+                                        onChange={() => setLocalSlideshow({ ...localSlideshow, mode: 'latest-only' })}
+                                    />
+                                    <label htmlFor="latestOnly" style={{ fontSize: '0.8rem' }}>Latest Only - Show newest image only</label>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <button className="btn-primary" onClick={() => updateSlideshowConfig(localSlideshow)} style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                        <Save size={16} /> Save Slideshow Settings
+                    </button>
+                </div>
+            </div>
+
+            {/* Polling Configuration */}
+            <div style={{ marginBottom: '2rem' }}>
+                <h4 style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>Image Polling</h4>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <input
+                            type="checkbox"
+                            id="pollingEnabled"
+                            checked={localPolling.enabled}
+                            onChange={(e) => setLocalPolling({ ...localPolling, enabled: e.target.checked })}
+                        />
+                        <label htmlFor="pollingEnabled" style={{ fontSize: '0.8rem' }}>Enable automatic polling for new images</label>
+                    </div>
+
+                    {localPolling.enabled && (
+                        <div>
+                            <label style={{ fontSize: '0.8rem', display: 'block', marginBottom: '4px' }}>
+                                Polling Interval: {localPolling.intervalSeconds} seconds
+                            </label>
+                            <input
+                                className="input-field"
+                                type="range"
+                                min="5"
+                                max="300"
+                                value={localPolling.intervalSeconds}
+                                onChange={(e) => setLocalPolling({ ...localPolling, intervalSeconds: parseInt(e.target.value) })}
+                            />
+                            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                                Range: 5 seconds to 5 minutes
+                            </div>
+                        </div>
+                    )}
+
+                    <button className="btn-primary" onClick={() => updatePollingConfig(localPolling)} style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                        <Save size={16} /> Save Polling Settings
+                    </button>
+                </div>
+            </div>
+
+            {/* AI Analysis Settings */}
+            <div className="glass-panel" style={{ padding: '1rem' }}>
+                <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Settings size={18} />
+                    AI Analysis Settings
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <input
+                            type="checkbox"
+                            id="aiEnabled"
+                            checked={aiAnalysisConfig.enabled}
+                            onChange={(e) => updateAIAnalysisConfig({ enabled: e.target.checked })}
+                        />
+                        <label htmlFor="aiEnabled" style={{ fontSize: '0.85rem', fontWeight: '500' }}>Enable AI Analysis</label>
+                    </div>
+
+                    {aiAnalysisConfig.enabled && (
+                        <>
+                            <div>
+                                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.3rem', display: 'block' }}>Gradio Endpoint</label>
+                                <input
+                                    className="input-field"
+                                    type="text"
+                                    value={aiAnalysisConfig.gradioEndpoint}
+                                    onChange={(e) => updateAIAnalysisConfig({ gradioEndpoint: e.target.value })}
+                                    placeholder="https://vision.deltathings.com/"
+                                    style={{ fontSize: '0.85rem' }}
+                                />
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                <input
+                                    type="checkbox"
+                                    id="waitForAnalysis"
+                                    checked={aiAnalysisConfig.waitForAnalysis}
+                                    onChange={(e) => updateAIAnalysisConfig({ waitForAnalysis: e.target.checked })}
+                                />
+                                <label htmlFor="waitForAnalysis" style={{ fontSize: '0.8rem' }}>Wait for analysis before displaying</label>
+                            </div>
+                        </>
+                    )}
                 </div>
             </div>
 

@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useMinIO } from '../../context/MinIOContext';
 import { useSettings } from '../../context/SettingsContext';
-import { listFolders } from '../../services/minioClient';
+import { apiService } from '../../services/apiService';
 import { ChevronRight, Database, Camera, Calendar } from 'lucide-react';
 
 interface BreadcrumbNavProps {
@@ -9,7 +8,6 @@ interface BreadcrumbNavProps {
 }
 
 export const BreadcrumbNav = ({ onSelectionChange }: BreadcrumbNavProps) => {
-    const { client, isConnected } = useMinIO();
     const { minioConfig } = useSettings();
 
     const [customers, setCustomers] = useState<string[]>([]);
@@ -21,58 +19,92 @@ export const BreadcrumbNav = ({ onSelectionChange }: BreadcrumbNavProps) => {
     const [dates, setDates] = useState<string[]>([]);
     const [selectedDate, setSelectedDate] = useState<string>('');
     const [error, setError] = useState<string | null>(null);
+    const [isConnected, setIsConnected] = useState(false);
+
+    // Check connection status
+    useEffect(() => {
+        const checkConnection = !!(minioConfig.accessKey && minioConfig.secretKey && minioConfig.bucket);
+        setIsConnected(checkConnection);
+    }, [minioConfig]);
 
     // Load Customers (Top Level Folders)
     useEffect(() => {
-        if (!client || !minioConfig.bucket) return;
+        if (!isConnected) return;
 
         const loadCustomers = async () => {
             setError(null);
             try {
-                const folders = await listFolders(client, minioConfig.bucket, '');
-                setCustomers(folders);
-                // Auto-select first if available (optional, maybe not for top level)
+                // For this structure, the "customer" is the folder prefix itself
+                if (minioConfig.folder) {
+                    // Remove trailing slash if present
+                    const customerName = minioConfig.folder.replace(/\/$/, '');
+                    setCustomers([customerName]);
+                    // Auto-select the customer since there's only one
+                    setSelectedCustomer(customerName);
+                } else {
+                    // If no folder prefix, list top-level folders as customers
+                    const response = await apiService.listFolders({
+                        accessKey: minioConfig.accessKey,
+                        secretKey: minioConfig.secretKey,
+                        bucket: minioConfig.bucket,
+                        folder: '',
+                        prefix: ''
+                    });
+                    setCustomers(response.folders);
+                }
             } catch (err: any) {
                 console.error("Failed to list customers", err);
                 setError(err.message || "Failed to load customers");
             }
         };
         loadCustomers();
-    }, [client, minioConfig.bucket]);
+    }, [isConnected, minioConfig]);
 
     // Load Cameras when Customer selected
     useEffect(() => {
-        if (!client || !selectedCustomer) {
+        if (!isConnected || !selectedCustomer) {
             setCameras([]);
             return;
         }
 
         const loadCameras = async () => {
             try {
-                const folders = await listFolders(client, minioConfig.bucket, `${selectedCustomer}/`);
-                setCameras(folders);
-                if (folders.length > 0) {
-                    setSelectedCamera(folders[0]); // Auto select first camera
+                const response = await apiService.listFolders({
+                    accessKey: minioConfig.accessKey,
+                    secretKey: minioConfig.secretKey,
+                    bucket: minioConfig.bucket,
+                    folder: minioConfig.folder,
+                    prefix: ''
+                });
+                setCameras(response.folders);
+                if (response.folders.length > 0) {
+                    setSelectedCamera(response.folders[0]); // Auto select first camera
                 }
             } catch (err) {
                 console.error("Failed to list cameras", err);
             }
         };
         loadCameras();
-    }, [client, selectedCustomer, minioConfig.bucket]);
+    }, [isConnected, selectedCustomer, minioConfig]);
 
     // Load Dates when Camera selected
     useEffect(() => {
-        if (!client || !selectedCustomer || !selectedCamera) {
+        if (!isConnected || !selectedCustomer || !selectedCamera) {
             setDates([]);
             return;
         }
 
         const loadDates = async () => {
             try {
-                const folders = await listFolders(client, minioConfig.bucket, `${selectedCustomer}/${selectedCamera}/`);
-                setDates(folders);
-                if (folders.length > 0) {
+                const response = await apiService.listFolders({
+                    accessKey: minioConfig.accessKey,
+                    secretKey: minioConfig.secretKey,
+                    bucket: minioConfig.bucket,
+                    folder: minioConfig.folder,
+                    prefix: `${selectedCamera}/`
+                });
+                setDates(response.folders);
+                if (response.folders.length > 0) {
                     // Sort dates (assuming format allows, otherwise string sort) or rely on MinIO order
                     // Ideally we want latest. listFolders returns alphabetic usually.
                     // Let's assume M-D-Y or similar needs sorting, but for now take index 0 or last?
@@ -81,21 +113,21 @@ export const BreadcrumbNav = ({ onSelectionChange }: BreadcrumbNavProps) => {
                     // Let's just pick the last one for now as "latest" approximation or first.
                     // Reverse alphabetical might work for YYYY-MM-DD but unclear for MM-DD-YYYY.
                     // Set the LAST one as default as it's likely latest.
-                    setSelectedDate(folders[folders.length - 1]);
+                    setSelectedDate(response.folders[response.folders.length - 1]);
                 }
             } catch (err) {
                 console.error("Failed to list dates", err);
             }
         };
         loadDates();
-    }, [client, selectedCustomer, selectedCamera, minioConfig.bucket]);
+    }, [isConnected, selectedCustomer, selectedCamera, minioConfig]);
 
     // Notify parent of selection
     useEffect(() => {
         if (selectedCustomer && selectedCamera && selectedDate) {
             onSelectionChange(selectedCustomer, selectedCamera, selectedDate);
         }
-    }, [selectedCustomer, selectedCamera, selectedDate, onSelectionChange]);
+    }, [selectedCustomer, selectedCamera, selectedDate]); // Remove onSelectionChange from deps
 
     if (!isConnected) return <div style={{ padding: '1rem', color: 'var(--text-secondary)' }}>Connecting to MinIO...</div>;
 

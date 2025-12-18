@@ -175,12 +175,13 @@ export const getImageUrl = async (client: S3Client, bucket: string, key: string)
 
     // CORS Fix for Localhost: Rewrite URL to go through proxy
     if (typeof window !== 'undefined' &&
-        (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') &&
-        signedUrl.includes('minioapi.deltathings.synology.me')) {
-        // Replace with port 1983 specifically
+        (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.includes('trapsnap.deltathings.com'))) {
+        // Replace any MinIO endpoint with proxy
+        const endpoint = (window as any).__MINIO_ENDPOINT__ || '192.168.86.3:8031';
         return signedUrl
-            .replace('https://minioapi.deltathings.synology.me:1983', `${window.location.origin}/s3-proxy`)
-            .replace('https://minioapi.deltathings.synology.me', `${window.location.origin}/s3-proxy`);
+            .replace(new RegExp(`https?://${endpoint.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`), `${window.location.origin}/s3-proxy`)
+            .replace(new RegExp(`https://minioapi\.deltathings\.synology\.me:1983`), `${window.location.origin}/s3-proxy`)
+            .replace(new RegExp(`https://minioapi\.deltathings\.synology\.me`), `${window.location.origin}/s3-proxy`);
     }
 
     return signedUrl;

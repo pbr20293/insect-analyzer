@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { S3Client } from "@aws-sdk/client-s3";
-import { useSettings } from './SettingsContext';
+import { useSettings, getMinIOEndpoint, shouldUseSSL } from './SettingsContext';
 import { createMinioClient } from '../services/minioClient';
 
 interface MinIOContextType {
@@ -23,7 +23,14 @@ export const MinIOProvider = ({ children }: { children: ReactNode }) => {
         }
 
         try {
-            const s3Client = createMinioClient(minioConfig);
+            const endpoint = getMinIOEndpoint();
+            const useSSL = shouldUseSSL(endpoint);
+            const s3Client = createMinioClient({
+                endPoint: endpoint,
+                accessKey: minioConfig.accessKey,
+                secretKey: minioConfig.secretKey,
+                useSSL: useSSL
+            });
             setClient(s3Client);
             setError(null);
         } catch (err) {

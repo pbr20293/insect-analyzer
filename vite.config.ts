@@ -5,13 +5,23 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
+    host: '0.0.0.0',
+    port: 5173,
     proxy: {
+      '/api': {
+        target: 'http://localhost:6263',
+        changeOrigin: true,
+        secure: false
+      },
       '/s3-proxy': {
-        target: 'https://minioapi.deltathings.synology.me:1983',
+        target: `http://${process.env.VITE_MINIO_ENDPOINT || '192.168.86.3:8031'}`,
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/s3-proxy/, '')
       }
     }
+  },
+  define: {
+    __MINIO_ENDPOINT__: JSON.stringify(process.env.VITE_MINIO_ENDPOINT || '192.168.86.3:8031')
   }
 })
