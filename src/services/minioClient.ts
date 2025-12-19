@@ -27,7 +27,7 @@ export const createMinioClient = (config: {
 
     const clientConfig: any = {
         endpoint: endpointUrl,
-        region: "us-east-1",
+        region: "us-west",
         credentials: {
             accessKeyId: config.accessKey,
             secretAccessKey: config.secretKey,

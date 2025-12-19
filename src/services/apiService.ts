@@ -53,6 +53,27 @@ class ApiService {
     });
   }
 
+  async listBuckets(credentials: {
+    accessKey: string;
+    secretKey: string;
+  }) {
+    return this.request<{ success: boolean; buckets: Array<{ name: string; creationDate: Date }> }>('/minio/list-buckets', {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+    });
+  }
+
+  async listRootFolders(credentials: {
+    accessKey: string;
+    secretKey: string;
+    bucket: string;
+  }) {
+    return this.request<{ success: boolean; folders: string[] }>('/minio/list-root-folders', {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+    });
+  }
+
   async listFolders(credentials: {
     accessKey: string;
     secretKey: string;
@@ -144,6 +165,20 @@ class ApiService {
     }
 
     return response.json();
+  }
+
+  // User Settings API methods
+  async getUserSettings(username: string) {
+    return this.request<{ success: boolean; settings: any }>(`/settings/${username}`, {
+      method: 'GET',
+    });
+  }
+
+  async saveUserSettings(username: string, settings: any) {
+    return this.request<{ success: boolean; message: string }>(`/settings/${username}`, {
+      method: 'POST',
+      body: JSON.stringify(settings),
+    });
   }
 }
 

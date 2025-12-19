@@ -1,10 +1,16 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { apiService } from '../services/apiService';
+import { useAuth } from './AuthContext';
 
 export interface MinIOConfig {
     accessKey: string;
     secretKey: string;
     bucket: string;
     folder: string;
+}
+
+export interface UserProfile {
+    tagline: string;
 }
 
 export interface ModelConfig {
@@ -37,12 +43,15 @@ interface SettingsContextType {
     slideshowConfig: SlideshowConfig;
     pollingConfig: PollingConfig;
     aiAnalysisConfig: AIAnalysisConfig;
+    userProfile: UserProfile;
     updateMinIOConfig: (config: MinIOConfig) => void;
     updateModelConfig: (config: Partial<ModelConfig>) => void;
     updateSlideshowConfig: (config: Partial<SlideshowConfig>) => void;
     updatePollingConfig: (config: Partial<PollingConfig>) => void;
     updateAIAnalysisConfig: (config: Partial<AIAnalysisConfig>) => void;
+    updateUserProfile: (profile: Partial<UserProfile>) => void;
     isConfigured: boolean;
+    isLoading: boolean;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -70,6 +79,7 @@ const MODEL_STORAGE_KEY = 'insect_analyzer_model_config';
 const SLIDESHOW_STORAGE_KEY = 'insect_analyzer_slideshow_config';
 const POLLING_STORAGE_KEY = 'insect_analyzer_polling_config';
 const AI_ANALYSIS_STORAGE_KEY = 'insect_analyzer_ai_analysis_config';
+const USER_PROFILE_STORAGE_KEY = 'insect_analyzer_user_profile';
 
 const DEFAULT_MODEL_CONFIG: ModelConfig = {
     modelName: "Generic Detection Model",
@@ -82,6 +92,10 @@ const DEFAULT_MINIO_CONFIG: MinIOConfig = {
     secretKey: '',
     bucket: '',
     folder: ''
+};
+
+const DEFAULT_USER_PROFILE: UserProfile = {
+    tagline: 'Advanced Insect Detection & Analysis'
 };
 
 // Get MinIO endpoint from environment variable
@@ -99,40 +113,117 @@ export const shouldUseSSL = (endpoint: string): boolean => {
 };
 
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
-    const [minioConfig, setMinioConfig] = useState<MinIOConfig>(() => {
-        const stored = localStorage.getItem(MINIO_STORAGE_KEY);
-        return stored ? JSON.parse(stored) : DEFAULT_MINIO_CONFIG;
-    });
+    const { user } = useAuth();
+    const [minioConfig, setMinioConfig] = useState<MinIOConfig>(DEFAULT_MINIO_CONFIG);
+    const [modelConfig, setModelConfig] = useState<ModelConfig>(DEFAULT_MODEL_CONFIG);
+    const [slideshowConfig, setSlideshowConfig] = useState<SlideshowConfig>(DEFAULT_SLIDESHOW_CONFIG);
+    const [pollingConfig, setPollingConfig] = useState<PollingConfig>(DEFAULT_POLLING_CONFIG);
+    const [aiAnalysisConfig, setAIAnalysisConfig] = useState<AIAnalysisConfig>(DEFAULT_AI_ANALYSIS_CONFIG);
+    const [userProfile, setUserProfile] = useState<UserProfile>(DEFAULT_USER_PROFILE);
+    const [isLoading, setIsLoading] = useState(false);
 
-    const [modelConfig, setModelConfig] = useState<ModelConfig>(() => {
-        const stored = localStorage.getItem(MODEL_STORAGE_KEY);
-        return stored ? JSON.parse(stored) : DEFAULT_MODEL_CONFIG;
-    });
+    // Load settings from server when user logs in
+    useEffect(() => {
+        if (user?.username) {
+            loadUserSettings(user.username);
+        } else {
+            // Reset to defaults when no user
+            setMinioConfig(DEFAULT_MINIO_CONFIG);
+            setModelConfig(DEFAULT_MODEL_CONFIG);
+            setSlideshowConfig(DEFAULT_SLIDESHOW_CONFIG);
+            setPollingConfig(DEFAULT_POLLING_CONFIG);
+            setAIAnalysisConfig(DEFAULT_AI_ANALYSIS_CONFIG);
+            setUserProfile(DEFAULT_USER_PROFILE);
+        }
+    }, [user?.username]);
 
-    const [slideshowConfig, setSlideshowConfig] = useState<SlideshowConfig>(() => {
-        const stored = localStorage.getItem(SLIDESHOW_STORAGE_KEY);
-        return stored ? JSON.parse(stored) : DEFAULT_SLIDESHOW_CONFIG;
-    });
+    const loadUserSettings = async (username: string) => {
+        setIsLoading(true);
+        try {
+            // First, try to load from localStorage
+            const storedMinio = localStorage.getItem(`${MINIO_STORAGE_KEY}_${username}`);
+            const storedModel = localStorage.getItem(`${MODEL_STORAGE_KEY}_${username}`);
+            const storedSlideshow = localStorage.getItem(`${SLIDESHOW_STORAGE_KEY}_${username}`);
+            const storedPolling = localStorage.getItem(`${POLLING_STORAGE_KEY}_${username}`);
+            const storedAI = localStorage.getItem(`${AI_ANALYSIS_STORAGE_KEY}_${username}`);
+            const storedProfile = localStorage.getItem(`${USER_PROFILE_STORAGE_KEY}_${username}`);
 
-    const [pollingConfig, setPollingConfig] = useState<PollingConfig>(() => {
-        const stored = localStorage.getItem(POLLING_STORAGE_KEY);
-        return stored ? JSON.parse(stored) : DEFAULT_POLLING_CONFIG;
-    });
+            // Apply localStorage data immediately (primary storage now)
+            if (storedMinio) setMinioConfig(JSON.parse(storedMinio));
+            if (storedModel) setModelConfig(JSON.parse(storedModel));
+            if (storedSlideshow) setSlideshowConfig(JSON.parse(storedSlideshow));
+            if (storedPolling) setPollingConfig(JSON.parse(storedPolling));
+            if (storedAI) setAIAnalysisConfig(JSON.parse(storedAI));
+            if (storedProfile) setUserProfile(JSON.parse(storedProfile));
 
-    const [aiAnalysisConfig, setAIAnalysisConfig] = useState<AIAnalysisConfig>(() => {
-        const stored = localStorage.getItem(AI_ANALYSIS_STORAGE_KEY);
-        return stored ? JSON.parse(stored) : DEFAULT_AI_ANALYSIS_CONFIG;
-    });
+            // Then try to load from server (will sync if server has newer data)
+            const result = await apiService.getUserSettings(username);
+            if (result.success && result.settings) {
+                const settings = result.settings;
+                // Only update if server has data (not null/empty)
+                if (settings.minioConfig?.accessKey) setMinioConfig(settings.minioConfig);
+                if (settings.modelConfig) setModelConfig(settings.modelConfig);
+                if (settings.slideshowConfig) setSlideshowConfig(settings.slideshowConfig);
+                if (settings.pollingConfig) setPollingConfig(settings.pollingConfig);
+                if (settings.aiAnalysisConfig) setAIAnalysisConfig(settings.aiAnalysisConfig);
+                if (settings.userProfile) setUserProfile(settings.userProfile);
+            }
+        } catch (error) {
+            console.error('Failed to load user settings from server (using localStorage):', error);
+            // localStorage already loaded above, so just continue
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const saveUserSettings = async (username: string) => {
+        if (!username) return;
+
+        const allSettings = {
+            minioConfig,
+            modelConfig,
+            slideshowConfig,
+            pollingConfig,
+            aiAnalysisConfig,
+            userProfile,
+            lastUpdated: new Date().toISOString()
+        };
+
+        try {
+            await apiService.saveUserSettings(username, allSettings);
+            // Also save to localStorage as backup
+            localStorage.setItem(`${MINIO_STORAGE_KEY}_${username}`, JSON.stringify(minioConfig));
+            localStorage.setItem(`${MODEL_STORAGE_KEY}_${username}`, JSON.stringify(modelConfig));
+            localStorage.setItem(`${SLIDESHOW_STORAGE_KEY}_${username}`, JSON.stringify(slideshowConfig));
+            localStorage.setItem(`${POLLING_STORAGE_KEY}_${username}`, JSON.stringify(pollingConfig));
+            localStorage.setItem(`${AI_ANALYSIS_STORAGE_KEY}_${username}`, JSON.stringify(aiAnalysisConfig));
+            localStorage.setItem(`${USER_PROFILE_STORAGE_KEY}_${username}`, JSON.stringify(userProfile));
+        } catch (error) {
+            console.error('Failed to save user settings to server:', error);
+            // Fallback to localStorage only
+            localStorage.setItem(`${MINIO_STORAGE_KEY}_${username}`, JSON.stringify(minioConfig));
+            localStorage.setItem(`${MODEL_STORAGE_KEY}_${username}`, JSON.stringify(modelConfig));
+            localStorage.setItem(`${SLIDESHOW_STORAGE_KEY}_${username}`, JSON.stringify(slideshowConfig));
+            localStorage.setItem(`${POLLING_STORAGE_KEY}_${username}`, JSON.stringify(pollingConfig));
+            localStorage.setItem(`${AI_ANALYSIS_STORAGE_KEY}_${username}`, JSON.stringify(aiAnalysisConfig));
+            localStorage.setItem(`${USER_PROFILE_STORAGE_KEY}_${username}`, JSON.stringify(userProfile));
+        }
+    };
 
     const updateMinIOConfig = (config: MinIOConfig) => {
         setMinioConfig(config);
-        localStorage.setItem(MINIO_STORAGE_KEY, JSON.stringify(config));
+        if (user?.username) {
+            // Debounce the server save
+            setTimeout(() => saveUserSettings(user.username), 100);
+        }
     };
 
     const updateModelConfig = (newConfig: Partial<ModelConfig>) => {
         setModelConfig(prev => {
             const updated = { ...prev, ...newConfig };
-            localStorage.setItem(MODEL_STORAGE_KEY, JSON.stringify(updated));
+            if (user?.username) {
+                setTimeout(() => saveUserSettings(user.username), 100);
+            }
             return updated;
         });
     };
@@ -140,7 +231,9 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     const updateSlideshowConfig = (newConfig: Partial<SlideshowConfig>) => {
         setSlideshowConfig(prev => {
             const updated = { ...prev, ...newConfig };
-            localStorage.setItem(SLIDESHOW_STORAGE_KEY, JSON.stringify(updated));
+            if (user?.username) {
+                setTimeout(() => saveUserSettings(user.username), 100);
+            }
             return updated;
         });
     };
@@ -148,7 +241,9 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     const updatePollingConfig = (newConfig: Partial<PollingConfig>) => {
         setPollingConfig(prev => {
             const updated = { ...prev, ...newConfig };
-            localStorage.setItem(POLLING_STORAGE_KEY, JSON.stringify(updated));
+            if (user?.username) {
+                setTimeout(() => saveUserSettings(user.username), 100);
+            }
             return updated;
         });
     };
@@ -156,7 +251,19 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     const updateAIAnalysisConfig = (newConfig: Partial<AIAnalysisConfig>) => {
         setAIAnalysisConfig(prev => {
             const updated = { ...prev, ...newConfig };
-            localStorage.setItem(AI_ANALYSIS_STORAGE_KEY, JSON.stringify(updated));
+            if (user?.username) {
+                setTimeout(() => saveUserSettings(user.username), 100);
+            }
+            return updated;
+        });
+    };
+
+    const updateUserProfile = (newProfile: Partial<UserProfile>) => {
+        setUserProfile(prev => {
+            const updated = { ...prev, ...newProfile };
+            if (user?.username) {
+                setTimeout(() => saveUserSettings(user.username), 100);
+            }
             return updated;
         });
     };
@@ -171,12 +278,15 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
                 slideshowConfig,
                 pollingConfig,
                 aiAnalysisConfig,
+                userProfile,
                 updateMinIOConfig,
                 updateModelConfig,
                 updateSlideshowConfig,
                 updatePollingConfig,
                 updateAIAnalysisConfig,
-                isConfigured
+                updateUserProfile,
+                isConfigured,
+                isLoading
             }}
         >
             {children}

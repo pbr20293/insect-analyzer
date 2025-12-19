@@ -8,6 +8,14 @@ export const LoginScreen = () => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
 
+    const availableUsers = [
+        { username: 'admin', description: 'Administrator' },
+        { username: 'demo', description: 'Demo User' },
+        { username: 'user', description: 'Standard User' },
+        { username: 'user1', description: 'User 1' },
+        { username: 'user2', description: 'User 2' }
+    ];
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (login(username, password)) {
@@ -15,6 +23,11 @@ export const LoginScreen = () => {
         } else {
             setError('Invalid credentials');
         }
+    };
+
+    const handleUserSelect = (selectedUser: string) => {
+        setUsername(selectedUser);
+        setError('');
     };
 
     return (
@@ -29,6 +42,35 @@ export const LoginScreen = () => {
                 <h2 style={{ textAlign: 'center', marginBottom: '2rem', color: 'var(--text-primary)' }}>
                     Insect Analyzer
                 </h2>
+
+                {/* Quick User Selection */}
+                <div style={{ marginBottom: '1.5rem' }}>
+                    <h3 style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '0.8rem', textAlign: 'center' }}>
+                        Quick Login
+                    </h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                        {availableUsers.map((user) => (
+                            <button
+                                key={user.username}
+                                type="button"
+                                onClick={() => handleUserSelect(user.username)}
+                                style={{
+                                    padding: '0.6rem',
+                                    background: username === user.username ? 'var(--accent-color)' : 'var(--bg-secondary)',
+                                    border: '1px solid var(--border-color)',
+                                    borderRadius: '6px',
+                                    color: username === user.username ? 'white' : 'var(--text-primary)',
+                                    cursor: 'pointer',
+                                    fontSize: '0.8rem',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                <div style={{ fontWeight: 500 }}>{user.username}</div>
+                                <div style={{ fontSize: '0.7rem', opacity: 0.8 }}>{user.description}</div>
+                            </button>
+                        ))}
+                    </div>
+                </div>
 
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
@@ -62,10 +104,6 @@ export const LoginScreen = () => {
                         Sign In
                     </button>
                 </form>
-
-                <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                    <p>Protected System. Authorized Personnel Only.</p>
-                </div>
             </div>
         </div>
     );

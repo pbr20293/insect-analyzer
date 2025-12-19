@@ -12,7 +12,7 @@ import { apiService, getApiBase } from './services/apiService';
 
 const MainApp = () => {
   const { user } = useAuth();
-  const { minioConfig, slideshowConfig, pollingConfig, aiAnalysisConfig, modelConfig } = useSettings();
+  const { minioConfig, slideshowConfig, pollingConfig, aiAnalysisConfig, modelConfig, isLoading } = useSettings();
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -266,6 +266,12 @@ const MainApp = () => {
     const handleKeyPress = (event: KeyboardEvent) => {
       if (imageList.length <= 1) return;
       
+      // Don't interfere with input fields
+      const target = event.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.contentEditable === 'true') {
+        return;
+      }
+      
       switch (event.key) {
         case 'ArrowLeft':
           event.preventDefault();
@@ -318,8 +324,9 @@ const MainApp = () => {
             
             // In latest-only mode, immediately show the newest image and stop auto-play
             if (slideshowConfig.mode === 'latest-only' && response.images.length > 0) {
-              const latestImage = response.images[response.images.length - 1];
-              const latestIndex = response.images.length - 1;
+              // Images are sorted newest first, so index 0 is the latest
+              const latestImage = response.images[0];
+              const latestIndex = 0;
               
               // Only update if we're not already showing the latest image
               if (currentImageIndex !== latestIndex) {
@@ -366,6 +373,32 @@ const MainApp = () => {
 
   if (!user) {
     return <LoginScreen />;
+  }
+
+  // Show loading screen when settings are being loaded
+  if (isLoading) {
+    return (
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100vh',
+        background: 'var(--bg-primary)',
+        flexDirection: 'column',
+        gap: '1rem'
+      }}>
+        <div style={{
+          width: '40px',
+          height: '40px',
+          border: '3px solid var(--border-color)',
+          borderTopColor: 'var(--accent-color)',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite'
+        }} />
+        <p style={{ color: 'var(--text-primary)' }}>Loading user settings...</p>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Welcome back, {user.username}!</p>
+      </div>
+    );
   }
 
   return (

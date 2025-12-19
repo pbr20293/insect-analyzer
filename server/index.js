@@ -57,6 +57,33 @@ app.use(compression());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// Simple in-memory storage for user settings
+const userSettings = new Map();
+
+// User settings routes
+app.get('/api/settings/:username', (req, res) => {
+  try {
+    const { username } = req.params;
+    const settings = userSettings.get(username) || null;
+    res.json({ success: true, settings });
+  } catch (error) {
+    console.error('Failed to get user settings:', error);
+    res.status(500).json({ error: 'Failed to get settings' });
+  }
+});
+
+app.post('/api/settings/:username', (req, res) => {
+  try {
+    const { username } = req.params;
+    const settings = req.body;
+    userSettings.set(username, settings);
+    res.json({ success: true, message: 'Settings saved successfully' });
+  } catch (error) {
+    console.error('Failed to save user settings:', error);
+    res.status(500).json({ error: 'Failed to save settings' });
+  }
+});
+
 // API routes
 app.use('/api/minio', minioRoutes);
 app.use('/api/gradio', gradioRoutes);

@@ -17,7 +17,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const VALID_USERS: Record<string, string> = {
   'admin': 'admin123',
   'demo': 'demo123',
-  'user': 'user123'
+  'user': 'user123',
+  'user1': 'user1123',
+  'user2': 'user2123'
 };
 
 const STORAGE_KEY = 'insect_analyzer_user';

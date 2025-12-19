@@ -8,6 +8,7 @@ const minioConfig = {
   endPoint: process.env.MINIO_ENDPOINT || '192.168.86.3',
   port: parseInt(process.env.MINIO_PORT) || 8031,
   useSSL: process.env.MINIO_USE_SSL === 'true' || false,
+  region: process.env.MINIO_REGION || 'us-west',
   accessKey: process.env.MINIO_ACCESS_KEY || '',
   secretKey: process.env.MINIO_SECRET_KEY || ''
 };

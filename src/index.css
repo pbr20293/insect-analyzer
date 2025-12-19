@@ -143,16 +143,40 @@ body {
 .fade-in {
   animation: fadeIn 0.3s ease-in-out;
 }
-  width: 8px;
-  height: 8px;
+
+/* Responsive Layout */
+@media (max-width: 1024px) {
+  .split-image-viewer {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: 1fr 1fr !important;
+    padding: 1rem !important;
+  }
+  
+  .image-panel {
+    min-height: 300px !important;
+  }
 }
-::-webkit-scrollbar-track {
-  background: var(--bg-primary);
+
+@media (max-width: 768px) {
+  .split-image-viewer {
+    padding: 0.5rem !important;
+    gap: 1rem !important;
+  }
+  
+  .image-panel {
+    min-height: 250px !important;
+  }
+  
+  .image-controls {
+    opacity: 1 !important; /* Always visible on mobile */
+  }
 }
-::-webkit-scrollbar-thumb {
-  background: var(--bg-secondary);
-  border-radius: 4px;
+
+/* Image zoom and pan improvements */
+.image-container:hover .image-controls {
+  opacity: 1;
 }
-::-webkit-scrollbar-thumb:hover {
-  background: var(--border-color);
+
+.grabbing {
+  cursor: grabbing !important;
 }

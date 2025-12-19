@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useSettings } from '../../context/SettingsContext';
 import { LogOut, Settings } from 'lucide-react';
 
 interface AppLayoutProps {
@@ -10,6 +11,7 @@ interface AppLayoutProps {
 
 export const AppLayout = ({ children, toggleSidebar, isSidebarOpen }: AppLayoutProps) => {
     const { user, logout } = useAuth();
+    const { userProfile } = useSettings();
 
     return (
         <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
@@ -28,9 +30,14 @@ export const AppLayout = ({ children, toggleSidebar, isSidebarOpen }: AppLayoutP
                     zIndex: 10
                 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <span style={{ fontWeight: 'bold', fontSize: '1.2rem', color: 'var(--accent-color)' }}>
-                            Insect Analyzer
-                        </span>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span style={{ fontWeight: 'bold', fontSize: '1.2rem', color: 'var(--accent-color)' }}>
+                                Insect Analyzer
+                            </span>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 400 }}>
+                                {userProfile.tagline}
+                            </span>
+                        </div>
                         <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '4px' }}>
                             v1.0.0
                         </span>

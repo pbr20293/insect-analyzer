@@ -36,6 +36,80 @@ router.post('/test-connection', async (req, res) => {
   }
 });
 
+// List all available buckets
+router.post('/list-buckets', async (req, res) => {
+  try {
+    const { accessKey, secretKey } = req.body;
+    
+    if (!accessKey || !secretKey) {
+      return res.status(400).json({ error: 'Access key and secret key are required' });
+    }
+
+    const client = getMinioClient({ accessKey, secretKey });
+    
+    // List all buckets
+    const buckets = await client.listBuckets();
+    
+    res.json({ 
+      success: true, 
+      buckets: buckets.map(bucket => ({
+        name: bucket.name,
+        creationDate: bucket.creationDate
+      }))
+    });
+  } catch (error) {
+    console.error('MinIO bucket listing failed:', error);
+    res.status(500).json({ 
+      error: 'Failed to list buckets', 
+      details: error.message 
+    });
+  }
+});
+
+// List root folders/prefixes for a bucket
+router.post('/list-root-folders', async (req, res) => {
+  try {
+    const { accessKey, secretKey, bucket } = req.body;
+    
+    if (!accessKey || !secretKey || !bucket) {
+      return res.status(400).json({ error: 'Credentials and bucket are required' });
+    }
+
+    const client = getMinioClient({ accessKey, secretKey });
+    
+    // List top-level objects and folders
+    const stream = client.listObjects(bucket, '', false);
+    const folders = new Set();
+    
+    for await (const obj of stream) {
+      if (obj.prefix) {
+        // It's a folder - add the root part
+        const rootFolder = obj.prefix.split('/')[0];
+        if (rootFolder) {
+          folders.add(rootFolder + '/');
+        }
+      } else if (obj.name) {
+        // It's a file - get the root folder if it has one
+        const parts = obj.name.split('/');
+        if (parts.length > 1) {
+          folders.add(parts[0] + '/');
+        }
+      }
+    }
+    
+    res.json({ 
+      success: true, 
+      folders: Array.from(folders).sort()
+    });
+  } catch (error) {
+    console.error('MinIO root folders listing failed:', error);
+    res.status(500).json({ 
+      error: 'Failed to list root folders', 
+      details: error.message 
+    });
+  }
+});
+
 // List folders (customers/cameras/dates)
 router.post('/list-folders', async (req, res) => {
   try {
