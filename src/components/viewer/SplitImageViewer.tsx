@@ -45,6 +45,18 @@ export const SplitImageViewer = ({ rawImageUrl, processedImageUrl, isLoading, ai
         }));
     }, []);
 
+    // Mouse wheel zoom functionality
+    const handleWheel = useCallback((e: React.WheelEvent, type: 'raw' | 'processed') => {
+        e.preventDefault();
+        const direction = e.deltaY < 0 ? 'in' : 'out';
+        handleZoom(type, direction);
+    }, [handleZoom]);
+
+    // Double-click to reset
+    const handleDoubleClick = useCallback((type: 'raw' | 'processed') => {
+        resetImageState(type);
+    }, [resetImageState]);
+
     // Pan functionality
     const handleMouseDown = useCallback((e: React.MouseEvent, type: 'raw' | 'processed') => {
         const setState = type === 'raw' ? setRawImageState : setProcessedImageState;
@@ -93,16 +105,20 @@ export const SplitImageViewer = ({ rawImageUrl, processedImageUrl, isLoading, ai
                 top: '8px',
                 right: '8px',
                 display: 'flex',
-                gap: '4px',
-                opacity: 0.8,
-                transition: 'opacity 0.2s'
+                gap: '3px',
+                opacity: 0.9,
+                transition: 'opacity 0.2s',
+                background: 'rgba(0, 0, 0, 0.6)',
+                borderRadius: '6px',
+                padding: '4px',
+                backdropFilter: 'blur(4px)'
             }}
         >
             <button
                 onClick={() => handleZoom(type, 'in')}
                 style={{
-                    background: 'rgba(0,0,0,0.7)',
-                    border: 'none',
+                    background: 'rgba(255, 255, 255, 0.15)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
                     borderRadius: '4px',
                     color: 'white',
                     width: '28px',
@@ -110,17 +126,27 @@ export const SplitImageViewer = ({ rawImageUrl, processedImageUrl, isLoading, ai
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    fontSize: '12px'
                 }}
-                title="Zoom In"
+                onMouseEnter={(e) => {
+                    (e.target as HTMLButtonElement).style.background = 'rgba(255, 255, 255, 0.25)';
+                    (e.target as HTMLButtonElement).style.transform = 'scale(1.05)';
+                }}
+                onMouseLeave={(e) => {
+                    (e.target as HTMLButtonElement).style.background = 'rgba(255, 255, 255, 0.15)';
+                    (e.target as HTMLButtonElement).style.transform = 'scale(1)';
+                }}
+                title="Zoom In (Scroll Up)"
             >
                 <ZoomIn size={14} />
             </button>
             <button
                 onClick={() => handleZoom(type, 'out')}
                 style={{
-                    background: 'rgba(0,0,0,0.7)',
-                    border: 'none',
+                    background: 'rgba(255, 255, 255, 0.15)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
                     borderRadius: '4px',
                     color: 'white',
                     width: '28px',
@@ -128,17 +154,26 @@ export const SplitImageViewer = ({ rawImageUrl, processedImageUrl, isLoading, ai
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
                 }}
-                title="Zoom Out"
+                onMouseEnter={(e) => {
+                    (e.target as HTMLButtonElement).style.background = 'rgba(255, 255, 255, 0.25)';
+                    (e.target as HTMLButtonElement).style.transform = 'scale(1.05)';
+                }}
+                onMouseLeave={(e) => {
+                    (e.target as HTMLButtonElement).style.background = 'rgba(255, 255, 255, 0.15)';
+                    (e.target as HTMLButtonElement).style.transform = 'scale(1)';
+                }}
+                title="Zoom Out (Scroll Down)"
             >
                 <ZoomOut size={14} />
             </button>
             <button
                 onClick={() => resetImageState(type)}
                 style={{
-                    background: 'rgba(0,0,0,0.7)',
-                    border: 'none',
+                    background: 'rgba(255, 255, 255, 0.15)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
                     borderRadius: '4px',
                     color: 'white',
                     width: '28px',
@@ -146,17 +181,26 @@ export const SplitImageViewer = ({ rawImageUrl, processedImageUrl, isLoading, ai
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
                 }}
-                title="Reset Zoom"
+                onMouseEnter={(e) => {
+                    (e.target as HTMLButtonElement).style.background = 'rgba(255, 255, 255, 0.25)';
+                    (e.target as HTMLButtonElement).style.transform = 'scale(1.05)';
+                }}
+                onMouseLeave={(e) => {
+                    (e.target as HTMLButtonElement).style.background = 'rgba(255, 255, 255, 0.15)';
+                    (e.target as HTMLButtonElement).style.transform = 'scale(1)';
+                }}
+                title="Reset View (Double Click)"
             >
                 <RotateCcw size={14} />
             </button>
             <button
                 onClick={() => toggleFullscreen(type)}
                 style={{
-                    background: 'rgba(0,0,0,0.7)',
-                    border: 'none',
+                    background: 'rgba(255, 255, 255, 0.15)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
                     borderRadius: '4px',
                     color: 'white',
                     width: '28px',
@@ -164,9 +208,20 @@ export const SplitImageViewer = ({ rawImageUrl, processedImageUrl, isLoading, ai
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
                 }}
-                title="Fullscreen"
+                onMouseEnter={(e) => {
+                    (e.target as HTMLButtonElement).style.background = 'rgba(59, 130, 246, 0.4)';
+                    (e.target as HTMLButtonElement).style.transform = 'scale(1.05)';
+                    (e.target as HTMLButtonElement).style.borderColor = 'rgba(59, 130, 246, 0.6)';
+                }}
+                onMouseLeave={(e) => {
+                    (e.target as HTMLButtonElement).style.background = 'rgba(255, 255, 255, 0.15)';
+                    (e.target as HTMLButtonElement).style.transform = 'scale(1)';
+                    (e.target as HTMLButtonElement).style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                }}
+                title="Fullscreen (F key)"
             >
                 <Maximize size={14} />
             </button>
@@ -269,10 +324,11 @@ export const SplitImageViewer = ({ rawImageUrl, processedImageUrl, isLoading, ai
                 display: 'grid',
                 gridTemplateColumns: window.innerWidth > 1024 ? '1fr 1fr' : '1fr',
                 gridTemplateRows: window.innerWidth <= 1024 ? '1fr 1fr' : '1fr',
-                gap: '1.5rem',
+                gap: '0.75rem',
                 height: '100%',
-                padding: '1.5rem',
-                position: 'relative'
+                padding: '0.75rem',
+                position: 'relative',
+                minHeight: 0 // Important for proper flex behavior
             }}
         >
             {/* Raw Image Panel */}
@@ -281,17 +337,20 @@ export const SplitImageViewer = ({ rawImageUrl, processedImageUrl, isLoading, ai
                 flexDirection: 'column',
                 overflow: 'hidden',
                 position: 'relative',
-                minHeight: window.innerWidth <= 1024 ? '300px' : 'auto'
+                minHeight: window.innerWidth <= 1024 ? '40vh' : 'auto',
+                borderRadius: '8px',
+                background: 'rgba(0, 0, 0, 0.3)'
             }}>
                 <div style={{
-                    padding: '0.8rem',
-                    borderBottom: '1px solid var(--border-color)',
+                    padding: '0.5rem 0.75rem',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
                     display: 'flex',
                     justifyContent: 'space-between',
-                    alignItems: 'center'
+                    alignItems: 'center',
+                    minHeight: '36px'
                 }}>
-                    <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Raw Capture</span>
-                    <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', background: 'rgba(0,0,0,0.3)', padding: '2px 6px', borderRadius: '4px' }}>ORIGINAL</span>
+                    <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)' }}>Raw Capture</span>
+                    <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.1)', padding: '1px 4px', borderRadius: '3px' }}>ORIGINAL</span>
                 </div>
 
                 <div 
@@ -305,10 +364,11 @@ export const SplitImageViewer = ({ rawImageUrl, processedImageUrl, isLoading, ai
                         alignItems: 'center', 
                         justifyContent: 'center',
                         overflow: 'hidden',
-                        cursor: rawImageState.scale > 1 ? 'grab' : 'default'
+                        cursor: rawImageState.scale > 1 ? 'grab' : 'default',
+                        minHeight: 0
                     }}
                 >
-                    {isLoading && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 5, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>}
+                    {isLoading && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 5, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>Loading...</div>}
                     {rawImageUrl ? (
                         <>
                             <img
@@ -316,10 +376,12 @@ export const SplitImageViewer = ({ rawImageUrl, processedImageUrl, isLoading, ai
                                 src={rawImageUrl}
                                 alt="Raw Capture"
                                 onMouseDown={(e) => handleMouseDown(e, 'raw')}
+                                onWheel={(e) => handleWheel(e, 'raw')}
+                                onDoubleClick={() => handleDoubleClick('raw')}
                                 onLoad={() => resetImageState('raw')}
                                 style={{ 
-                                    maxWidth: '100%', 
-                                    maxHeight: '100%', 
+                                    width: '100%',
+                                    height: '100%', 
                                     objectFit: 'contain',
                                     transform: `scale(${rawImageState.scale}) translate(${rawImageState.translateX / rawImageState.scale}px, ${rawImageState.translateY / rawImageState.scale}px)`,
                                     cursor: rawImageState.scale > 1 ? 'grab' : 'default',
@@ -331,7 +393,7 @@ export const SplitImageViewer = ({ rawImageUrl, processedImageUrl, isLoading, ai
                             <ImageControls type="raw" />
                         </>
                     ) : (
-                        <div style={{ color: 'var(--text-secondary)' }}>No Image</div>
+                        <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>No Image</div>
                     )}
                 </div>
             </div>
@@ -344,13 +406,14 @@ export const SplitImageViewer = ({ rawImageUrl, processedImageUrl, isLoading, ai
                     top: '50%',
                     transform: 'translate(-50%, -50%)',
                     zIndex: 10,
-                    background: 'var(--bg-secondary)',
+                    background: 'rgba(59, 130, 246, 0.15)',
                     borderRadius: '50%',
-                    padding: '0.5rem',
-                    border: '1px solid var(--border-color)',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+                    padding: '0.4rem',
+                    border: '1px solid rgba(59, 130, 246, 0.3)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                    backdropFilter: 'blur(4px)'
                 }}>
-                    <ArrowRight size={24} color="var(--accent-color)" />
+                    <ArrowRight size={20} color="var(--accent-color)" />
                 </div>
             )}
 
@@ -360,19 +423,22 @@ export const SplitImageViewer = ({ rawImageUrl, processedImageUrl, isLoading, ai
                 flexDirection: 'column',
                 overflow: 'hidden',
                 position: 'relative',
-                border: '1px solid var(--border-highlight)',
-                minHeight: window.innerWidth <= 1024 ? '300px' : 'auto'
+                border: '1px solid rgba(59, 130, 246, 0.3)',
+                minHeight: window.innerWidth <= 1024 ? '40vh' : 'auto',
+                borderRadius: '8px',
+                background: 'rgba(59, 130, 246, 0.05)'
             }}>
                 <div style={{
-                    padding: '0.8rem',
-                    borderBottom: '1px solid var(--border-color)',
+                    padding: '0.5rem 0.75rem',
+                    borderBottom: '1px solid rgba(59, 130, 246, 0.2)',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    background: 'rgba(59, 130, 246, 0.1)'
+                    background: 'rgba(59, 130, 246, 0.08)',
+                    minHeight: '36px'
                 }}>
-                    <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--accent-color)' }}>AI Analysis</span>
-                    <span style={{ fontSize: '0.7rem', color: '#fff', background: 'var(--accent-color)', padding: '2px 6px', borderRadius: '4px' }}>PROCESSED</span>
+                    <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--accent-color)' }}>AI Analysis</span>
+                    <span style={{ fontSize: '0.65rem', color: '#fff', background: 'var(--accent-color)', padding: '1px 4px', borderRadius: '3px' }}>PROCESSED</span>
                 </div>
 
                 <div 
@@ -386,10 +452,11 @@ export const SplitImageViewer = ({ rawImageUrl, processedImageUrl, isLoading, ai
                         alignItems: 'center', 
                         justifyContent: 'center',
                         overflow: 'hidden',
-                        cursor: processedImageState.scale > 1 ? 'grab' : 'default'
+                        cursor: processedImageState.scale > 1 ? 'grab' : 'default',
+                        minHeight: 0
                     }}
                 >
-                    {isLoading && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 5, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Processing...</div>}
+                    {isLoading && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 5, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>Processing...</div>}
                     {processedImageUrl ? (
                         <>
                             <img
@@ -397,10 +464,12 @@ export const SplitImageViewer = ({ rawImageUrl, processedImageUrl, isLoading, ai
                                 src={processedImageUrl}
                                 alt="Analyzed Capture"
                                 onMouseDown={(e) => handleMouseDown(e, 'processed')}
+                                onWheel={(e) => handleWheel(e, 'processed')}
+                                onDoubleClick={() => handleDoubleClick('processed')}
                                 onLoad={() => resetImageState('processed')}
                                 style={{ 
-                                    maxWidth: '100%', 
-                                    maxHeight: '100%', 
+                                    width: '100%',
+                                    height: '100%', 
                                     objectFit: 'contain',
                                     transform: `scale(${processedImageState.scale}) translate(${processedImageState.translateX / processedImageState.scale}px, ${processedImageState.translateY / processedImageState.scale}px)`,
                                     cursor: processedImageState.scale > 1 ? 'grab' : 'default',
@@ -412,7 +481,7 @@ export const SplitImageViewer = ({ rawImageUrl, processedImageUrl, isLoading, ai
                             <ImageControls type="processed" />
                         </>
                     ) : (
-                        <div style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '1rem' }}>
+                        <div style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '1rem', fontSize: '0.9rem' }}>
                             {aiEnabled ? (isLoading ? 'Analyzing...' : 'Waiting for analysis...') : 'AI analysis turned off'}
                         </div>
                     )}

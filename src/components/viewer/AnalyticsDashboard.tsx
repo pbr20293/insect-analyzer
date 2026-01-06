@@ -107,28 +107,27 @@ export const AnalyticsDashboard = ({ markdownContent }: AnalyticsDashboardProps)
     const analysisData = parseAnalysisText(markdownContent || '');
 
     return (
-        <div className="glass-panel" style={{
-            marginTop: '0rem',
-            borderRadius: 0,
-            borderLeft: 'none',
-            borderRight: 'none',
-            borderBottom: 'none',
-            height: '250px',
+        <div style={{
+            height: '100%',
             display: 'flex',
             flexDirection: 'column',
             overflow: 'hidden'
         }}>
+            {/* Header */}
             <div style={{
-                padding: '0.8rem 1.5rem',
+                padding: '0.75rem 1rem',
                 borderBottom: '1px solid var(--border-color)',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.8rem'
+                gap: '0.5rem',
+                background: 'var(--bg-panel)',
+                minHeight: '48px'
             }}>
-                <Activity size={18} color="var(--success)" />
-                <h3 style={{ fontSize: '1rem', fontWeight: 600 }}>Analytics Dashboard</h3>
+                <Activity size={16} color="var(--success)" />
+                <h3 style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)' }}>Analytics</h3>
             </div>
 
+            {/* Content */}
             <div style={{
                 flex: 1,
                 padding: '1rem',
@@ -139,158 +138,168 @@ export const AnalyticsDashboard = ({ markdownContent }: AnalyticsDashboardProps)
             }}>
                 {markdownContent ? (
                     <>
-                        {/* All Stats in One Row */}
+                        {/* Stats Summary */}
                         <div style={{
                             display: 'flex',
-                            gap: '0.8rem',
-                            height: '100px'
+                            flexDirection: 'column',
+                            gap: '0.75rem'
                         }}>
                             {/* Total Detections */}
                             <div style={{
                                 background: 'rgba(59, 130, 246, 0.1)',
                                 border: '1px solid rgba(59, 130, 246, 0.2)',
                                 borderRadius: '8px',
-                                padding: '0.8rem',
-                                textAlign: 'center',
-                                minWidth: '80px',
-                                flex: '0 0 80px'
+                                padding: '0.75rem',
+                                textAlign: 'center'
                             }}>
-                                <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>
-                                    Total
+                                <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
+                                    Total Detections
                                 </div>
-                                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--accent-color)' }}>
+                                <div style={{ fontSize: '1.75rem', fontWeight: 'bold', color: 'var(--accent-color)' }}>
                                     {analysisData.totalObjects || '0'}
                                 </div>
                             </div>
 
-                            {/* Classes Detected */}
+                            {/* Classes */}
                             <div style={{
                                 background: 'rgba(34, 197, 94, 0.1)',
                                 border: '1px solid rgba(34, 197, 94, 0.2)',
                                 borderRadius: '8px',
-                                padding: '0.8rem',
-                                textAlign: 'center',
-                                minWidth: '80px',
-                                flex: '0 0 80px'
+                                padding: '0.75rem',
+                                textAlign: 'center'
                             }}>
-                                <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>
-                                    Classes
+                                <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
+                                    Unique Classes
                                 </div>
-                                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#22c55e' }}>
+                                <div style={{ fontSize: '1.75rem', fontWeight: 'bold', color: '#22c55e' }}>
                                     {Object.keys(analysisData.objectTypes).length || '0'}
                                 </div>
                             </div>
+                        </div>
 
-                            {/* Detections */}
+                        {/* Detection Details */}
+                        {analysisData.detections && analysisData.detections.length > 0 && (
                             <div style={{
-                                background: 'rgba(239, 68, 68, 0.1)',
-                                border: '1px solid rgba(239, 68, 68, 0.2)',
+                                background: 'rgba(0,0,0,0.1)',
+                                border: '1px solid var(--border-color)',
                                 borderRadius: '8px',
-                                padding: '0.8rem',
-                                textAlign: 'center',
-                                minWidth: '110px',
-                                flex: '0 0 110px',
+                                padding: '0.75rem',
                                 display: 'flex',
-                                flexDirection: 'column'
+                                flexDirection: 'column',
+                                maxHeight: '200px'
                             }}>
-                                <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>
+                                <div style={{ fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-primary)', fontSize: '0.8rem' }}>
                                     Detections
                                 </div>
                                 <div style={{
-                                    fontSize: '0.6rem',
-                                    fontWeight: 'bold',
-                                    color: '#ef4444',
                                     flex: 1,
                                     overflowY: 'auto',
-                                    lineHeight: '1.2',
-                                    wordBreak: 'break-word',
-                                    textAlign: 'left'
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '0.25rem'
                                 }}>
-                                    {analysisData.detections && analysisData.detections.length > 0 ? (
-                                        analysisData.detections.map((detection, index) => (
-                                            <div key={index} style={{ 
-                                                marginBottom: '2px',
-                                                fontSize: '0.6rem',
-                                                padding: '1px 2px'
+                                    {analysisData.detections.map((detection, index) => (
+                                        <div key={index} style={{ 
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            padding: '0.25rem 0.5rem',
+                                            background: 'var(--bg-secondary)',
+                                            borderRadius: '4px',
+                                            fontSize: '0.75rem'
+                                        }}>
+                                            <span style={{ 
+                                                fontWeight: 600, 
+                                                textTransform: 'capitalize',
+                                                color: 'var(--text-primary)' 
                                             }}>
-                                                <div style={{ fontWeight: 600 }}>{detection.class}</div>
-                                                <div style={{ fontSize: '0.55rem', opacity: 0.8 }}>({detection.confidence.toFixed(2)})</div>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        'None'
-                                    )}
+                                                {detection.class}
+                                            </span>
+                                            <span style={{ 
+                                                fontSize: '0.7rem', 
+                                                color: 'var(--accent-color)',
+                                                fontWeight: 'bold'
+                                            }}>
+                                                {detection.confidence.toFixed(2)}
+                                            </span>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
+                        )}
 
-                            {/* Detection Breakdown - Takes remaining space */}
-                            {Object.keys(analysisData.objectTypes).length > 0 && (
-                                <div style={{
-                                    background: 'rgba(0,0,0,0.05)',
-                                    border: '1px solid var(--border-color)',
-                                    borderRadius: '8px',
-                                    padding: '0.8rem',
-                                    flex: '1',
-                                    display: 'flex',
-                                    flexDirection: 'column'
-                                }}>
-                                    <div style={{ fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-primary)', fontSize: '0.8rem' }}>
-                                        Breakdown
-                                    </div>
-                                    <div style={{
-                                        display: 'grid',
-                                        gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))',
-                                        gap: '0.4rem',
-                                        flex: 1,
-                                        overflowY: 'auto'
-                                    }}>
-                                        {Object.entries(analysisData.objectTypes).map(([type, count]) => (
-                                            <div key={type} style={{
-                                                background: 'var(--bg-secondary)',
-                                                padding: '0.4rem 0.3rem',
-                                                borderRadius: '4px',
-                                                textAlign: 'center',
-                                                fontSize: '0.7rem',
-                                                minHeight: '40px',
-                                                display: 'flex',
-                                                flexDirection: 'column',
-                                                justifyContent: 'center'
-                                            }}>
-                                                <div style={{ 
-                                                    fontWeight: 600, 
-                                                    textTransform: 'capitalize', 
-                                                    lineHeight: '1.1',
-                                                    wordBreak: 'break-word',
-                                                    fontSize: '0.65rem'
-                                                }}>
-                                                    {type}
-                                                </div>
-                                                <div style={{ color: 'var(--accent-color)', fontSize: '0.8rem', fontWeight: 'bold' }}>{count}</div>
-                                            </div>
-                                        ))}
-                                    </div>
+                        {/* Class Breakdown */}
+                        {Object.keys(analysisData.objectTypes).length > 0 && (
+                            <div style={{
+                                background: 'rgba(0,0,0,0.1)',
+                                border: '1px solid var(--border-color)',
+                                borderRadius: '8px',
+                                padding: '0.75rem',
+                                display: 'flex',
+                                flexDirection: 'column'
+                            }}>
+                                <div style={{ fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-primary)', fontSize: '0.8rem' }}>
+                                    Class Breakdown
                                 </div>
-                            )}
-                        </div>
+                                <div style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '0.25rem'
+                                }}>
+                                    {Object.entries(analysisData.objectTypes).map(([type, count]) => (
+                                        <div key={type} style={{
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            padding: '0.25rem 0.5rem',
+                                            background: 'var(--bg-secondary)',
+                                            borderRadius: '4px'
+                                        }}>
+                                            <span style={{ 
+                                                fontSize: '0.75rem',
+                                                fontWeight: 500, 
+                                                textTransform: 'capitalize',
+                                                color: 'var(--text-primary)'
+                                            }}>
+                                                {type}
+                                            </span>
+                                            <div style={{
+                                                background: 'var(--accent-color)',
+                                                color: 'white',
+                                                borderRadius: '12px',
+                                                padding: '2px 6px',
+                                                fontSize: '0.7rem',
+                                                fontWeight: 'bold',
+                                                minWidth: '24px',
+                                                textAlign: 'center'
+                                            }}>
+                                                {count}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Raw Analysis Text */}
                         <div style={{
-                            background: 'rgba(0,0,0,0.05)',
+                            background: 'rgba(0,0,0,0.1)',
                             border: '1px solid var(--border-color)',
                             borderRadius: '8px',
-                            padding: '0.8rem',
-                            fontSize: '0.75rem',
-                            lineHeight: '1.3',
+                            padding: '0.75rem',
+                            fontSize: '0.7rem',
+                            lineHeight: '1.4',
                             whiteSpace: 'pre-wrap',
                             flex: 1,
-                            minHeight: '60px',
-                            maxHeight: '80px',
+                            minHeight: '100px',
                             overflowY: 'auto'
                         }}>
-                            <div style={{ fontWeight: 600, marginBottom: '0.4rem', color: 'var(--text-secondary)' }}>
+                            <div style={{ fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
                                 Raw Analysis
                             </div>
-                            {markdownContent}
+                            <div style={{ color: 'var(--text-primary)' }}>
+                                {markdownContent}
+                            </div>
                         </div>
                     </>
                 ) : (
@@ -300,9 +309,12 @@ export const AnalyticsDashboard = ({ markdownContent }: AnalyticsDashboardProps)
                         alignItems: 'center',
                         justifyContent: 'center',
                         color: 'var(--text-secondary)',
-                        fontStyle: 'italic'
+                        fontStyle: 'italic',
+                        fontSize: '0.85rem',
+                        textAlign: 'center',
+                        padding: '2rem 1rem'
                     }}>
-                        Select an image to view detailed analytics.
+                        Select an image to view detailed analytics
                     </div>
                 )}
             </div>

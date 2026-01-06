@@ -207,9 +207,9 @@ const MainApp = () => {
       let indexToShow;
       
       if (slideshowConfig.mode === 'latest-only') {
-        // Show the latest image (last in array)
-        imageToShow = imageList[imageList.length - 1];
-        indexToShow = imageList.length - 1;
+        // Show the latest image (first in array, since images are sorted newest first)
+        imageToShow = imageList[0];
+        indexToShow = 0;
       } else {
         // Show the first image (continuous mode)
         imageToShow = imageList[0];
@@ -405,166 +405,189 @@ const MainApp = () => {
     <AppLayout toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} isSidebarOpen={isSidebarOpen}>
       <Sidebar isOpen={isSidebarOpen} />
 
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        <BreadcrumbNav
-          onSelectionChange={handleSelectionChange}
-        />
-
-        <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
-          <SplitImageViewer
-            rawImageUrl={rawImageUrl}
-            processedImageUrl={analyzedImageUrl}
-            isLoading={isProcessing}
-            aiEnabled={aiAnalysisConfig.enabled}
+      <div className="main-layout" style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
+        {/* Main Content Area */}
+        <div className="main-content" style={{ 
+          flex: 1, 
+          display: 'flex', 
+          flexDirection: 'column', 
+          minWidth: 0, 
+          overflow: 'hidden' 
+        }}>
+          <BreadcrumbNav
+            onSelectionChange={handleSelectionChange}
           />
-          
-          {/* AI Processing indicator */}
-          {isProcessing && aiAnalysisConfig.enabled && (
-            <div style={{
-              position: 'absolute',
-              top: '20px',
-              right: '20px',
-              background: 'rgba(59, 130, 246, 0.9)',
-              color: 'white',
-              padding: '10px 20px',
-              borderRadius: '20px',
-              fontSize: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              zIndex: 15
-            }}>
-              <div style={{
-                width: '16px',
-                height: '16px',
-                border: '2px solid white',
-                borderTopColor: 'transparent',
-                borderRadius: '50%',
-                animation: 'spin 1s linear infinite'
-              }} />
-              Processing with AI...
-            </div>
-          )}
-          
-          {/* Slideshow controls */}
-          {slideshowConfig.showManualControls && imageList.length > 1 && (
-            <div style={{
-              position: 'absolute',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              left: '20px',
-              right: '20px',
-              display: 'flex',
-              justifyContent: 'space-between',
-              pointerEvents: 'none',
-              zIndex: 10
-            }}>
-              <button
-                onClick={goToPreviousImage}
-                style={{
-                  background: 'rgba(0, 0, 0, 0.7)',
-                  border: 'none',
-                  borderRadius: '50%',
-                  width: '50px',
-                  height: '50px',
-                  color: 'white',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  pointerEvents: 'auto',
-                  transition: 'background 0.2s'
-                }}
-                onMouseEnter={(e) => (e.target as HTMLButtonElement).style.background = 'rgba(0, 0, 0, 0.9)'}
-                onMouseLeave={(e) => (e.target as HTMLButtonElement).style.background = 'rgba(0, 0, 0, 0.7)'}
-              >
-                <ChevronLeft size={24} />
-              </button>
-              
-              <button
-                onClick={goToNextImage}
-                style={{
-                  background: 'rgba(0, 0, 0, 0.7)',
-                  border: 'none',
-                  borderRadius: '50%',
-                  width: '50px',
-                  height: '50px',
-                  color: 'white',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  pointerEvents: 'auto',
-                  transition: 'background 0.2s'
-                }}
-                onMouseEnter={(e) => (e.target as HTMLButtonElement).style.background = 'rgba(0, 0, 0, 0.9)'}
-                onMouseLeave={(e) => (e.target as HTMLButtonElement).style.background = 'rgba(0, 0, 0, 0.7)'}
-              >
-                <ChevronRight size={24} />
-              </button>
-            </div>
-          )}
 
-          {/* Slideshow status */}
-          {imageList.length > 1 && (
-            <div style={{
-              position: 'absolute',
-              bottom: '20px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              background: 'rgba(0, 0, 0, 0.8)',
-              color: 'white',
-              padding: '10px 20px',
-              borderRadius: '25px',
-              fontSize: '14px',
-              zIndex: 10,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '15px',
-              minWidth: '200px',
-              justifyContent: 'center'
-            }}>
-              <span>{currentImageIndex + 1} / {imageList.length}</span>
-              
-              {slideshowConfig.autoAdvance && (
-                <>
-                  <button
-                    onClick={() => setIsAutoPlaying(!isAutoPlaying)}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: 'white',
-                      cursor: 'pointer',
-                      fontSize: '16px',
-                      padding: '4px'
-                    }}
-                  >
-                    {isAutoPlaying ? '⏸️' : '▶️'}
-                  </button>
-                  
-                  {isAutoPlaying && (
-                    <div style={{
-                      width: '8px',
-                      height: '8px',
-                      backgroundColor: '#4CAF50',
-                      borderRadius: '50%',
-                      animation: 'pulse 1.5s infinite'
-                    }} />
-                  )}
-                </>
-              )}
-              
+          <div style={{ 
+            flex: 1, 
+            overflow: 'hidden', 
+            position: 'relative',
+            minHeight: 0 
+          }}>
+            <SplitImageViewer
+              rawImageUrl={rawImageUrl}
+              processedImageUrl={analyzedImageUrl}
+              isLoading={isProcessing}
+              aiEnabled={aiAnalysisConfig.enabled}
+            />
+            
+            {/* AI Processing indicator */}
+            {isProcessing && aiAnalysisConfig.enabled && (
               <div style={{
-                fontSize: '12px',
-                opacity: 0.8
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                background: 'rgba(59, 130, 246, 0.9)',
+                color: 'white',
+                padding: '10px 20px',
+                borderRadius: '20px',
+                fontSize: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                zIndex: 15
               }}>
-                ← → keys | Space to pause
+                <div style={{
+                  width: '16px',
+                  height: '16px',
+                  border: '2px solid white',
+                  borderTopColor: 'transparent',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite'
+                }} />
+                Processing with AI...
               </div>
-            </div>
-          )}
+            )}
+            
+            {/* Slideshow controls */}
+            {slideshowConfig.showManualControls && imageList.length > 1 && (
+              <div className="slideshow-controls" style={{
+                position: 'absolute',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                left: '20px',
+                right: '20px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                pointerEvents: 'none',
+                zIndex: 10
+              }}>
+                <button
+                  onClick={goToPreviousImage}
+                  style={{
+                    background: 'rgba(0, 0, 0, 0.7)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '50px',
+                    height: '50px',
+                    color: 'white',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    pointerEvents: 'auto',
+                    transition: 'background 0.2s'
+                  }}
+                  onMouseEnter={(e) => (e.target as HTMLButtonElement).style.background = 'rgba(0, 0, 0, 0.9)'}
+                  onMouseLeave={(e) => (e.target as HTMLButtonElement).style.background = 'rgba(0, 0, 0, 0.7)'}
+                >
+                  <ChevronLeft size={24} />
+                </button>
+                
+                <button
+                  onClick={goToNextImage}
+                  style={{
+                    background: 'rgba(0, 0, 0, 0.7)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '50px',
+                    height: '50px',
+                    color: 'white',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    pointerEvents: 'auto',
+                    transition: 'background 0.2s'
+                  }}
+                  onMouseEnter={(e) => (e.target as HTMLButtonElement).style.background = 'rgba(0, 0, 0, 0.9)'}
+                  onMouseLeave={(e) => (e.target as HTMLButtonElement).style.background = 'rgba(0, 0, 0, 0.7)'}
+                >
+                  <ChevronRight size={24} />
+                </button>
+              </div>
+            )}
+
+            {/* Slideshow status */}
+            {imageList.length > 1 && (
+              <div style={{
+                position: 'absolute',
+                bottom: '20px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                background: 'rgba(0, 0, 0, 0.8)',
+                color: 'white',
+                padding: '10px 20px',
+                borderRadius: '25px',
+                fontSize: '14px',
+                zIndex: 10,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '15px',
+                minWidth: '200px',
+                justifyContent: 'center'
+              }}>
+                <span>{currentImageIndex + 1} / {imageList.length}</span>
+                
+                {slideshowConfig.autoAdvance && (
+                  <>
+                    <button
+                      onClick={() => setIsAutoPlaying(!isAutoPlaying)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'white',
+                        cursor: 'pointer',
+                        fontSize: '16px',
+                        padding: '4px'
+                      }}
+                    >
+                      {isAutoPlaying ? '⏸️' : '▶️'}
+                    </button>
+                    
+                    {isAutoPlaying && (
+                      <div style={{
+                        width: '8px',
+                        height: '8px',
+                        backgroundColor: '#4CAF50',
+                        borderRadius: '50%',
+                        animation: 'pulse 1.5s infinite'
+                      }} />
+                    )}
+                  </>
+                )}
+                
+                <div style={{
+                  fontSize: '12px',
+                  opacity: 0.8
+                }}>
+                  ← → keys | Space to pause
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
-        <AnalyticsDashboard markdownContent={analysisText} />
+        {/* Analytics Sidebar */}
+        <div className="analytics-sidebar" style={{ 
+          width: '320px',
+          borderLeft: '1px solid var(--border-color)',
+          background: 'var(--bg-secondary)',
+          display: 'flex',
+          flexDirection: 'column'
+        }}>
+          <AnalyticsDashboard markdownContent={analysisText} />
+        </div>
       </div>
     </AppLayout>
   );

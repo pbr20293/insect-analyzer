@@ -145,30 +145,93 @@ body {
 }
 
 /* Responsive Layout */
+@media (max-width: 1200px) {
+  /* Tablet layout - stack analytics sidebar below on medium screens */
+  .main-layout {
+    flex-direction: column !important;
+  }
+  
+  .analytics-sidebar {
+    width: 100% !important;
+    height: 240px !important;
+    border-left: none !important;
+    border-top: 1px solid var(--border-color) !important;
+  }
+}
+
 @media (max-width: 1024px) {
   .split-image-viewer {
     grid-template-columns: 1fr !important;
     grid-template-rows: 1fr 1fr !important;
-    padding: 1rem !important;
+    padding: 0.5rem !important;
+    gap: 0.5rem !important;
   }
   
   .image-panel {
-    min-height: 300px !important;
+    min-height: 35vh !important;
+  }
+
+  .analytics-sidebar {
+    height: 200px !important;
+  }
+
+  /* Hide manual slideshow controls on smaller screens as they overlap with images */
+  .slideshow-controls {
+    display: none !important;
   }
 }
 
 @media (max-width: 768px) {
   .split-image-viewer {
-    padding: 0.5rem !important;
-    gap: 1rem !important;
+    padding: 0.25rem !important;
+    gap: 0.25rem !important;
   }
   
   .image-panel {
-    min-height: 250px !important;
+    min-height: 30vh !important;
   }
   
   .image-controls {
     opacity: 1 !important; /* Always visible on mobile */
+  }
+
+  .analytics-sidebar {
+    height: 180px !important;
+  }
+
+  /* Make header more compact on mobile */
+  header {
+    height: 40px !important;
+    padding: 0 0.75rem !important;
+  }
+
+  header span {
+    font-size: 0.9rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .split-image-viewer {
+    grid-template-rows: 1fr !important;
+    grid-template-columns: 1fr !important;
+  }
+  
+  .image-panel {
+    min-height: 45vh !important;
+  }
+
+  .analytics-sidebar {
+    height: 35vh !important;
+  }
+
+  /* Stack images vertically and make analytics take remaining space */
+  .main-layout {
+    flex-direction: column !important;
+  }
+  
+  .main-content {
+    flex: 1 !important;
+    min-height: 60vh !important;
   }
 }
 
@@ -179,4 +242,20 @@ body {
 
 .grabbing {
   cursor: grabbing !important;
+}
+
+/* Smooth transitions for layout changes */
+.main-content,
+.analytics-sidebar {
+  transition: all 0.3s ease;
+}
+
+/* Optimize scrollbars for narrow containers */
+.analytics-sidebar ::-webkit-scrollbar {
+  width: 4px;
+}
+
+.analytics-sidebar ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
 }
