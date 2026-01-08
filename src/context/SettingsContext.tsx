@@ -140,37 +140,32 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     const loadUserSettings = async (username: string) => {
         setIsLoading(true);
         try {
-            // First, try to load from localStorage
+            const result = await apiService.getUserSettings(username);
+            if (result.success && result.settings) {
+                const settings = result.settings;
+                setMinioConfig(settings.minioConfig || DEFAULT_MINIO_CONFIG);
+                setModelConfig(settings.modelConfig || DEFAULT_MODEL_CONFIG);
+                setSlideshowConfig(settings.slideshowConfig || DEFAULT_SLIDESHOW_CONFIG);
+                setPollingConfig(settings.pollingConfig || DEFAULT_POLLING_CONFIG);
+                setAIAnalysisConfig(settings.aiAnalysisConfig || DEFAULT_AI_ANALYSIS_CONFIG);
+                setUserProfile(settings.userProfile || DEFAULT_USER_PROFILE);
+            }
+        } catch (error) {
+            console.error('Failed to load user settings:', error);
+            // Fallback to localStorage for backwards compatibility
             const storedMinio = localStorage.getItem(`${MINIO_STORAGE_KEY}_${username}`);
             const storedModel = localStorage.getItem(`${MODEL_STORAGE_KEY}_${username}`);
             const storedSlideshow = localStorage.getItem(`${SLIDESHOW_STORAGE_KEY}_${username}`);
             const storedPolling = localStorage.getItem(`${POLLING_STORAGE_KEY}_${username}`);
             const storedAI = localStorage.getItem(`${AI_ANALYSIS_STORAGE_KEY}_${username}`);
             const storedProfile = localStorage.getItem(`${USER_PROFILE_STORAGE_KEY}_${username}`);
-
-            // Apply localStorage data immediately (primary storage now)
+            
             if (storedMinio) setMinioConfig(JSON.parse(storedMinio));
             if (storedModel) setModelConfig(JSON.parse(storedModel));
             if (storedSlideshow) setSlideshowConfig(JSON.parse(storedSlideshow));
             if (storedPolling) setPollingConfig(JSON.parse(storedPolling));
             if (storedAI) setAIAnalysisConfig(JSON.parse(storedAI));
             if (storedProfile) setUserProfile(JSON.parse(storedProfile));
-
-            // Then try to load from server (will sync if server has newer data)
-            const result = await apiService.getUserSettings(username);
-            if (result.success && result.settings) {
-                const settings = result.settings;
-                // Only update if server has data (not null/empty)
-                if (settings.minioConfig?.accessKey) setMinioConfig(settings.minioConfig);
-                if (settings.modelConfig) setModelConfig(settings.modelConfig);
-                if (settings.slideshowConfig) setSlideshowConfig(settings.slideshowConfig);
-                if (settings.pollingConfig) setPollingConfig(settings.pollingConfig);
-                if (settings.aiAnalysisConfig) setAIAnalysisConfig(settings.aiAnalysisConfig);
-                if (settings.userProfile) setUserProfile(settings.userProfile);
-            }
-        } catch (error) {
-            console.error('Failed to load user settings from server (using localStorage):', error);
-            // localStorage already loaded above, so just continue
         } finally {
             setIsLoading(false);
         }
